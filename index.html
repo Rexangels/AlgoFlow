@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Algo-Verse Adventures - Final Touches</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a1a2e; /* Deep space blue */
+            color: #e0e0e0; /* Light grey for text */
+            overflow-x: hidden;
+        }
+        .font-press-start {
+            font-family: 'Press Start 2P', cursive;
+        }
+        .hero-bg {
+            background: linear-gradient(135deg, #16222A 0%, #3A6073 100%);
+            clip-path: polygon(0 0, 100% 0, 100% 90%, 0 100%);
+        }
+        .module-card {
+            background-color: #2c2c54; border: 2px solid #4a4a8a;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: flex; flex-direction: column; justify-content: space-between;
+            position: relative; 
+        }
+        .module-card:hover {
+            transform: translateY(-10px) scale(1.03);
+            box-shadow: 0 10px 20px rgba(74, 74, 138, 0.5);
+        }
+        .completion-badge {
+            position: absolute; top: -10px; right: -10px;
+            background-color: #ffc107; color: #1a1a2e;
+            width: 30px; height: 30px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; font-weight: bold; border: 2px solid #1a1a2e;
+            box-shadow: 0 0 10px #ffc107; transform: scale(0);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Elastic pop */
+        }
+        .completion-badge.visible { transform: scale(1); }
+
+        .btn { padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 600; transition: all 0.2s ease; }
+        .btn:active { transform: scale(0.95); }
+        .btn-primary { background-color: #ff69b4; color: #1a1a2e; }
+        .btn-primary:hover { background-color: #ff85c4; }
+        .btn-secondary { background-color: #7b68ee; color: #ffffff; }
+        .btn-secondary:hover { background-color: #9370db; }
+        .btn-hint { background-color: #00bcd4; color: #1a1a2e; }
+        .btn-hint:hover { background-color: #10daef; }
+
+        .fade-in-up { animation: fadeInUp 0.8s ease-out forwards; opacity: 0; transform: translateY(20px); }
+        @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+        .delay-1 { animation-delay: 0.2s; } .delay-2 { animation-delay: 0.4s; }
+        .delay-3 { animation-delay: 0.6s; } .delay-4 { animation-delay: 0.8s; }
+
+        .draggable-item, .choice-item, .flowchart-symbol-draggable {
+            cursor: grab; background-color: #3a3a6e; border: 1px solid #5f5fba;
+            user-select: none; transition: background-color 0.2s, transform 0.1s ease-out;
+        }
+        .draggable-item:active, .choice-item:active, .flowchart-symbol-draggable:active { transform: scale(0.95); }
+        .draggable-item:hover, .choice-item:hover, .flowchart-symbol-draggable:hover { background-color: #4f4f8e; }
+
+        .drop-zone { border: 2px dashed #5f5fba; min-height: 50px; background-color: rgba(74, 74, 138, 0.1); position: relative; transition: background-color 0.2s, border-color 0.2s; }
+        .drop-zone.over { background-color: rgba(74, 74, 138, 0.3); border-color: #ff69b4; }
+
+        .correct-step, .correct-answer { background-color: #28a745 !important; color: white; border-color: #1e7e34; }
+        .incorrect-step, .incorrect-answer { background-color: #dc3545 !important; color: white; border-color: #b02a37; }
+        .placeholder { background-color: #4a4a8a; opacity: 0.5; border: 1px dashed #fff; margin: 5px 0; }
+
+        .modal { background-color: rgba(26, 26, 46, 0.9); transition: opacity 0.3s ease; }
+        .modal-content { background-color: #2c2c54; border: 2px solid #4a4a8a; max-height: 90vh; overflow-y: auto; transition: transform 0.3s ease-out, opacity 0.3s ease-out; }
+        
+        #star-particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
+        
+        .input-field { background-color: #1a1a2e; border: 1px solid #4a4a8a; color: #e0e0e0; padding: 0.5rem; border-radius: 0.375rem; }
+        .input-field:focus { outline: none; border-color: #ff69b4; box-shadow: 0 0 0 2px rgba(255, 105, 180, 0.5); }
+
+        .flowchart-symbol {
+            min-height: 50px; padding: 10px; margin: 5px 0;
+            display: flex; align-items: center; justify-content: center; text-align: center;
+            border: 2px solid #7b68ee; color: #e0e0e0; background-color: #3a3a6e;
+            position: relative; font-size: 0.9rem;
+        }
+        .flowchart-symbol.fs-terminal { border-radius: 50px; width: 120px; height: 50px; }
+        .flowchart-symbol.fs-process { border-radius: 0; width: 150px; height: 60px; }
+        .flowchart-symbol.fs-input-output { width: 160px; height: 50px; transform: skewX(-20deg); }
+        .flowchart-symbol.fs-input-output > span { transform: skewX(20deg); display: inline-block; }
+        .flowchart-symbol.fs-decision {
+            width: 120px; height: 80px; line-height: 1.2;
+            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+        }
+        .flowchart-symbol-draggable { padding: 10px 15px; margin: 5px; border-radius: 8px; }
+        
+        /* Arrow styling for flowchart items in a drop zone */
+        .flowchart-drop-zone > .flowchart-symbol-draggable {
+            margin-bottom: 35px; /* Ensure space for the arrow below */
+        }
+        .flowchart-drop-zone > .flowchart-symbol-draggable::after {
+            content: '';
+            position: absolute;
+            bottom: -28px; /* Position arrow below the symbol */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0; height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 12px solid #7b68ee; /* Arrow color and shape */
+            z-index: 5; 
+        }
+        .flowchart-drop-zone > .flowchart-symbol-draggable:last-child::after { 
+            display: none; /* No arrow after the last symbol */
+        }
+        .flowchart-drop-zone > .flowchart-symbol-draggable:last-child {
+            margin-bottom: 5px; /* Reset margin for last item */
+        }
+
+
+        .hint-box { background-color: rgba(0, 188, 212, 0.1); border-left: 4px solid #00bcd4; padding: 10px; margin-top: 10px; border-radius: 4px; font-style: italic; color: #b2ebf2; }
+
+        /* XP Bar */
+        #xpBarContainer { width: 150px; height: 20px; background-color: #4a4a8a; border-radius: 10px; overflow: hidden; border: 1px solid #5f5fba; margin-left:10px;}
+        #xpBarFill { width: 0%; height: 100%; background-color: #ffc107; transition: width 0.5s ease-in-out; }
+        #levelUpNotification {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0);
+            background-color: rgba(255, 105, 180, 0.95); color: white;
+            padding: 30px 50px; border-radius: 20px;
+            font-size: 2.5rem; font-family: 'Press Start 2P', cursive;
+            text-align: center; z-index: 200;
+            box-shadow: 0 0 30px rgba(255, 105, 180, 0.7);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s ease;
+            opacity: 0;
+        }
+        #levelUpNotification.show { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    </style>
+</head>
+<body class="min-h-screen">
+    <canvas id="star-particles"></canvas>
+    <div id="levelUpNotification">Level Up!</div>
+
+    <header class="bg-opacity-80 backdrop-blur-md sticky top-0 z-50 shadow-lg border-b border-gray-700">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="text-2xl md:text-3xl font-press-start text-pink-400">Algo-Verse</h1>
+            <div class="flex items-center space-x-2 md:space-x-4">
+                <div class="flex items-center">
+                    <span id="xpCounter" class="text-sm md:text-lg font-semibold text-yellow-400 font-press-start">XP: 0</span>
+                    <div id="xpBarContainer"><div id="xpBarFill"></div></div>
+                </div>
+                <nav>
+                    <a href="#home" class="text-gray-300 hover:text-pink-400 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium">Home</a>
+                    <a href="#modules" class="text-gray-300 hover:text-pink-400 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium">Modules</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <section id="home" class="hero-bg py-20 md:py-32">
+        <div class="container mx-auto px-6 text-center">
+            <h2 class="text-4xl md:text-6xl font-press-start text-white mb-6 fade-in-up">Welcome to Algo-Verse!</h2>
+            <p class="text-xl md:text-2xl text-gray-300 mb-10 fade-in-up delay-1">
+                Your epic journey into the world of programming begins now.
+            </p>
+            <button onclick="playSound('click'); scrollToModules()" class="btn btn-primary font-semibold py-3 px-8 text-lg shadow-xl hover:shadow-2xl transform hover:scale-105 fade-in-up delay-2">
+                Start Your Adventure
+            </button>
+        </div>
+    </section>
+
+    <section id="modules" class="py-16 md:py-24">
+        <div class="container mx-auto px-6">
+            <h3 class="text-3xl md:text-4xl font-press-start text-center text-pink-400 mb-12 fade-in-up">Choose Your Quest</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div id="module-algorithms" class="module-card p-6 rounded-xl shadow-lg fade-in-up delay-1"> <div class="completion-badge">⭐</div> <div> <div class="text-5xl mb-4 text-center">📜</div> <h4 class="text-2xl font-semibold mb-3 text-center text-gray-100">The Scroll of Algorithms</h4> <p class="text-gray-400 mb-4 text-sm text-center">Master step-by-step problem-solving. Define clear instructions for any task.</p> </div> <button onclick="playSound('click'); openModuleModal('algorithms')" class="btn btn-secondary w-full mt-auto">Begin Quest</button> </div>
+                <div id="module-flowcharts" class="module-card p-6 rounded-xl shadow-lg fade-in-up delay-2"> <div class="completion-badge">⭐</div> <div> <div class="text-5xl mb-4 text-center">🗺️</div> <h4 class="text-2xl font-semibold mb-3 text-center text-gray-100">The Map of Flowcharts</h4> <p class="text-gray-400 mb-4 text-sm text-center">Visualize your logic! Create diagrams that map the flow of your algorithmic solutions.</p> </div> <button onclick="playSound('click'); openModuleModal('flowcharts')" class="btn btn-secondary w-full mt-auto">Begin Quest</button> </div>
+                <div id="module-basic_prog_1" class="module-card p-6 rounded-xl shadow-lg fade-in-up delay-3"> <div class="completion-badge">⭐</div> <div> <div class="text-5xl mb-4 text-center">🧱</div> <h4 class="text-2xl font-semibold mb-3 text-center text-gray-100">The Pillars of Code</h4> <p class="text-gray-400 mb-4 text-sm text-center">Learn variables, operators, and built-in functions – the foundations of programming.</p> </div> <button onclick="playSound('click'); openModuleModal('basic_prog_1')" class="btn btn-secondary w-full mt-auto">Begin Quest</button> </div>
+                <div id="module-basic_prog_2" class="module-card p-6 rounded-xl shadow-lg fade-in-up delay-4"> <div class="completion-badge">⭐</div> <div> <div class="text-5xl mb-4 text-center">🧪</div> <h4 class="text-2xl font-semibold mb-3 text-center text-gray-100">The Alchemist's Equations</h4> <p class="text-gray-400 mb-4 text-sm text-center">Translate algebraic equations into powerful programs. Solve math puzzles with code.</p> </div> <button onclick="playSound('click'); openModuleModal('basic_prog_2')" class="btn btn-secondary w-full mt-auto">Begin Quest</button> </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="py-12 bg-gray-900 bg-opacity-50 border-t border-gray-700"> <div class="container mx-auto px-6 text-center text-gray-400"> <p>&copy; 2025 Algo-Verse Adventures. All rights reserved.</p> <p class="text-sm">Embark on a journey to change your world with code!</p> </div> </footer>
+
+    <div id="moduleModal" class="fixed inset-0 modal flex items-center justify-center p-4 hidden z-[100] opacity-0">
+        <div class="modal-content max-w-3xl w-full p-6 md:p-8 rounded-xl shadow-2xl relative transform scale-95 opacity-0">
+            <button onclick="playSound('click'); closeModuleModal()" class="absolute top-4 right-4 text-gray-400 hover:text-pink-400 text-3xl leading-none font-bold">&times;</button>
+            <div id="modalTitle" class="text-2xl md:text-3xl font-press-start text-pink-400 mb-4"></div>
+            <div id="modalContent" class="text-gray-200 space-y-6"></div>
+            <div id="modalNavigation" class="mt-6 flex justify-between items-center">
+                <button id="prevChallengeBtn" onclick="playSound('click');" class="btn btn-primary hidden">Previous</button>
+                <button id="hintBtn" onclick="playSound('click');" class="btn btn-hint hidden">Show Hint</button>
+                <button id="nextChallengeBtn" onclick="playSound('click');" class="btn btn-primary hidden">Next</button>
+            </div>
+            <div id="feedbackMessage" class="mt-4 p-3 rounded-md text-center hidden transition-all duration-300 opacity-0 transform scale-95"></div>
+            <div id="hintDisplay" class="hint-box hidden mt-4"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- Global Variables & Setup ---
+        const modal = document.getElementById('moduleModal');
+        const modalTitleElement = document.getElementById('modalTitle');
+        const modalContent = document.getElementById('modalContent');
+        const modalContainer = modal.querySelector('.modal-content');
+        const feedbackMessageEl = document.getElementById('feedbackMessage');
+        const hintDisplay = document.getElementById('hintDisplay');
+        const hintBtn = document.getElementById('hintBtn');
+        const xpCounterElement = document.getElementById('xpCounter');
+        const xpBarFill = document.getElementById('xpBarFill');
+        const levelUpNotification = document.getElementById('levelUpNotification');
+        
+        let userXP = 0;
+        const XP_PER_LEVEL = 250; // XP needed to level up
+        let currentLevel = 1;
+
+        let currentModuleName = '';
+        let currentModuleChallenges = [];
+        let currentChallengeIndex = 0;
+        let challengeCompletionStatus = {}; 
+        let moduleCompletion = { algorithms: false, flowcharts: false, basic_prog_1: false, basic_prog_2: false };
+
+        // --- Tone.js Sound Synthesizers ---
+        const sounds = {
+            click: new Tone.MembraneSynth({ octaves: 4, pitchDecay: 0.1, volume: -18 }).toDestination(),
+            correct: new Tone.PluckSynth({ attackNoise: 0.5, dampening: 4000, resonance: 0.7, volume: -10 }).toDestination(),
+            incorrect: new Tone.NoiseSynth({ noise: { type: 'brown' }, envelope: { attack: 0.005, decay: 0.1, sustain: 0 }, volume: -15 }).toDestination(),
+            xpGain: new Tone.Synth({ oscillator: { type: 'triangle' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 }, volume: -12 }).toDestination(),
+            levelUp: new Tone.FatOscillator("Ab3", "sawtooth", 40).set({ volume: -8 }).toDestination()
+        };
+        // Ensure Tone.js starts after user interaction
+        let audioInitialized = false;
+        async function initializeAudio() {
+            if (!audioInitialized) {
+                await Tone.start();
+                audioInitialized = true;
+                console.log("AudioContext started!");
+            }
+        }
+        document.body.addEventListener('click', initializeAudio, { once: true });
+
+
+        function playSound(soundName) {
+            if (!audioInitialized || !sounds[soundName]) return;
+            try {
+                if (soundName === 'correct') sounds.correct.triggerAttackRelease("C5", "8n", Tone.now());
+                else if (soundName === 'incorrect') sounds.incorrect.triggerAttackRelease("2n", Tone.now());
+                else if (soundName === 'click') sounds.click.triggerAttackRelease("C4", "32n", Tone.now());
+                else if (soundName === 'xpGain') sounds.xpGain.triggerAttackRelease("E5", "16n", Tone.now());
+                else if (soundName === 'levelUp') {
+                    sounds.levelUp.start(Tone.now());
+                    sounds.levelUp.stop(Tone.now() + 1.5); // Play for 1.5 seconds
+                    // A little melody for level up
+                    const synth = new Tone.Synth({ volume: -10 }).toDestination();
+                    const now = Tone.now();
+                    synth.triggerAttackRelease("C4", "8n", now);
+                    synth.triggerAttackRelease("E4", "8n", now + 0.2);
+                    synth.triggerAttackRelease("G4", "8n", now + 0.4);
+                    synth.triggerAttackRelease("C5", "4n", now + 0.6);
+                }
+            } catch (error) {
+                console.error("Error playing sound:", soundName, error);
+            }
+        }
+
+
+        // --- Star Particle Background ---
+        const starCanvas = document.getElementById('star-particles');
+        const starCtx = starCanvas.getContext('2d');
+        let stars = [];
+        const numStars = 150;
+        function resizeStarCanvas() { starCanvas.width = window.innerWidth; starCanvas.height = window.innerHeight; }
+        function initStars() { stars = []; for (let i = 0; i < numStars; i++) { stars.push({ x: Math.random() * starCanvas.width, y: Math.random() * starCanvas.height, radius: Math.random() * 1.5 + 0.5, vx: Math.random() * 0.2 - 0.1, vy: Math.random() * 0.2 - 0.1, alpha: Math.random() * 0.5 + 0.5 }); } }
+        function drawStars() { starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height); starCtx.fillStyle = 'rgba(255, 255, 255, 0.8)'; stars.forEach(star => { starCtx.beginPath(); starCtx.arc(star.x, star.y, star.radius, 0, Math.PI * 2); starCtx.globalAlpha = star.alpha; starCtx.fill(); starCtx.globalAlpha = 1.0; star.x += star.vx; star.y += star.vy; if (star.x < 0) star.x = starCanvas.width; if (star.x > starCanvas.width) star.x = 0; if (star.y < 0) star.y = starCanvas.height; if (star.y > starCanvas.height) star.y = 0; }); requestAnimationFrame(drawStars); }
+        window.addEventListener('resize', () => { resizeStarCanvas(); initStars(); });
+        resizeStarCanvas(); initStars(); drawStars();
+
+
+        // --- XP & Completion Management ---
+        function updateXpDisplay() {
+            xpCounterElement.textContent = `XP: ${userXP}`;
+            const progress = (userXP % XP_PER_LEVEL) / XP_PER_LEVEL * 100;
+            xpBarFill.style.width = `${progress}%`;
+        }
+
+        function addXP(points) {
+            userXP += points;
+            playSound('xpGain');
+            updateXpDisplay();
+            
+            const newLevel = Math.floor(userXP / XP_PER_LEVEL) + 1;
+            if (newLevel > currentLevel) {
+                currentLevel = newLevel;
+                playSound('levelUp');
+                levelUpNotification.classList.add('show');
+                setTimeout(() => {
+                    levelUpNotification.classList.remove('show');
+                }, 2500); // Show for 2.5 seconds
+            }
+            
+            xpCounterElement.classList.add('transform', 'scale-125', 'transition-transform', 'duration-300');
+            setTimeout(() => xpCounterElement.classList.remove('scale-125'), 300);
+        }
+        updateXpDisplay(); // Initial call
+
+        function markChallengeCompleted(moduleKey, challengeIdx, xpAwarded) {
+            const challengeId = `${moduleKey}-${challengeIdx}`;
+            if (!challengeCompletionStatus[challengeId]) {
+                addXP(xpAwarded);
+                challengeCompletionStatus[challengeId] = true;
+            }
+            checkModuleCompletion(moduleKey);
+        }
+
+        function checkModuleCompletion(moduleKey) {
+            const challengesForModule = ALL_CHALLENGES[moduleKey];
+            if (!challengesForModule) return;
+            let allDone = true;
+            for (let i = 0; i < challengesForModule.length; i++) {
+                if (!challengeCompletionStatus[`${moduleKey}-${i}`]) {
+                    allDone = false; break;
+                }
+            }
+            if (allDone) {
+                moduleCompletion[moduleKey] = true;
+                const badge = document.querySelector(`#module-${moduleKey} .completion-badge`);
+                if (badge) badge.classList.add('visible');
+            }
+        }
+
+        // --- Modal Functionality ---
+        function openModuleModal(moduleName) {
+            currentModuleName = moduleName;
+            currentChallengeIndex = 0; 
+            feedbackMessageEl.classList.add('hidden', 'opacity-0', 'scale-95');
+            hintDisplay.classList.add('hidden');
+            hintBtn.classList.add('hidden');
+
+            currentModuleChallenges = ALL_CHALLENGES[moduleName] || [];
+            modalTitleElement.textContent = currentModuleChallenges.length > 0 ? currentModuleChallenges[0].moduleTitle || "Challenge" : "Error";
+
+            loadChallenge(currentChallengeIndex);
+            updateNavigationButtons();
+
+            modal.classList.remove('hidden');
+            setTimeout(() => { // Stagger animations for smoother entry
+                 modal.classList.remove('opacity-0');
+                 modalContainer.classList.remove('scale-95', 'opacity-0');
+                 modalContainer.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeModuleModal() {
+            modalContainer.classList.remove('scale-100', 'opacity-100');
+            modalContainer.classList.add('scale-95', 'opacity-0');
+            modal.classList.add('opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modalContent.innerHTML = ''; 
+                feedbackMessageEl.classList.add('hidden');
+                hintDisplay.classList.add('hidden');
+            }, 300); // Match transition duration
+        }
+        
+        function loadChallenge(index) {
+            if (index < 0 || index >= currentModuleChallenges.length) return;
+            const challenge = currentModuleChallenges[index];
+            
+            modalTitleElement.textContent = challenge.moduleTitle || "Challenge";
+            modalContent.innerHTML = challenge.content(); 
+            if (challenge.init) challenge.init(); 
+
+            feedbackMessageEl.classList.add('hidden', 'opacity-0', 'scale-95');
+            hintDisplay.classList.add('hidden');
+            hintBtn.classList.toggle('hidden', !challenge.hint);
+            if (challenge.hint) {
+                hintBtn.onclick = () => {
+                    playSound('click');
+                    hintDisplay.textContent = challenge.hint;
+                    hintDisplay.classList.toggle('hidden'); // Toggle visibility
+                };
+            }
+            updateNavigationButtons();
+        }
+
+        function updateNavigationButtons() {
+            const prevBtn = document.getElementById('prevChallengeBtn');
+            const nextBtn = document.getElementById('nextChallengeBtn');
+            prevBtn.classList.toggle('hidden', currentChallengeIndex === 0);
+            prevBtn.onclick = () => { playSound('click'); loadChallenge(--currentChallengeIndex); };
+            nextBtn.classList.toggle('hidden', currentChallengeIndex === currentModuleChallenges.length - 1);
+            nextBtn.onclick = () => { playSound('click'); loadChallenge(++currentChallengeIndex); };
+        }
+
+        function showFeedback(message, isCorrect, xpAwardedIfCorrect) {
+            feedbackMessageEl.textContent = message;
+            feedbackMessageEl.classList.remove('hidden', 'bg-green-600', 'bg-red-600', 'bg-yellow-500', 'text-white', 'text-gray-800', 'opacity-0', 'scale-95');
+            
+            setTimeout(() => { // Allow DOM to update before triggering transition
+                feedbackMessageEl.classList.remove('opacity-0', 'scale-95');
+                feedbackMessageEl.classList.add('opacity-100', 'scale-100');
+            }, 10);
+
+            if (isCorrect === true) {
+                feedbackMessageEl.classList.add('bg-green-600', 'text-white');
+                playSound('correct');
+                spawnConfetti();
+                if (xpAwardedIfCorrect) {
+                     markChallengeCompleted(currentModuleName, currentChallengeIndex, xpAwardedIfCorrect);
+                }
+            } else if (isCorrect === false) {
+                feedbackMessageEl.classList.add('bg-red-600', 'text-white');
+                playSound('incorrect');
+            } else { 
+                feedbackMessageEl.classList.add('bg-yellow-500', 'text-gray-800');
+            }
+        }
+        
+        function scrollToModules() { document.getElementById('modules').scrollIntoView({ behavior: 'smooth' }); }
+        function spawnConfetti() { const confettiContainer = document.body; const colors = ['#ff69b4', '#ffc107', '#00bcd4', '#4caf50', '#ffffff']; for (let i = 0; i < 100; i++) { const confetti = document.createElement('div'); confetti.style.position = 'fixed'; confetti.style.left = `${Math.random() * 100}vw`; confetti.style.top = `${Math.random() * -50 + 50}vh`; confetti.style.width = `${Math.random() * 10 + 5}px`; confetti.style.height = confetti.style.width; confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)]; confetti.style.opacity = '1'; confetti.style.borderRadius = '50%'; confetti.style.zIndex = '200'; confetti.animate([ { transform: `translateY(0px) rotate(0deg)`, opacity: 1 }, { transform: `translateY(${window.innerHeight + 50}px) rotate(${Math.random() * 720}deg)`, opacity: 0 }], { duration: Math.random() * 3000 + 2000, easing: 'ease-out', delay: Math.random() * 500 }); confettiContainer.appendChild(confetti); setTimeout(() => { confetti.remove(); }, 5000); } }
+
+        // --- Drag and Drop Logic ---
+        let draggedItem = null;
+        let placeholder = null;
+        function createDragPlaceholder() { const p = document.createElement('div'); p.classList.add('placeholder', 'p-2', 'rounded-md', 'h-10', 'my-1'); return p; }
+        
+        function setupGenericDragAndDrop(draggableSelector, dropZoneId, availableZoneId) {
+            const draggables = document.querySelectorAll(draggableSelector);
+            const dropZone = document.getElementById(dropZoneId);
+            const availableItemsContainer = document.getElementById(availableZoneId);
+            if (!placeholder) placeholder = createDragPlaceholder();
+
+            draggables.forEach(draggable => {
+                draggable.setAttribute('draggable', 'true');
+                draggable.addEventListener('dragstart', (e) => {
+                    draggedItem = e.target;
+                    let dataToSet = 'unknown'; 
+                    // ---- START FIX for TypeError ----
+                    if (e.target && typeof e.target.dataset !== 'undefined') { 
+                    // ---- END FIX for TypeError ----
+                        dataToSet = e.target.dataset.step || e.target.dataset.symbolId || e.target.dataset.value || 'unknown';
+                    }
+                    e.dataTransfer.setData('text/plain', dataToSet);
+                    setTimeout(() => {
+                        // ---- START FIX for TypeError ----
+                        if (e.target && e.target.classList) { 
+                        // ---- END FIX for TypeError ----
+                            e.target.classList.add('opacity-50');
+                        }
+                    }, 0);
+                });
+                draggable.addEventListener('dragend', (e) => {
+                    setTimeout(() => {
+                        // ---- START FIX for TypeError ----
+                        if (e.target && e.target.classList) { 
+                        // ---- END FIX for TypeError ----
+                            e.target.classList.remove('opacity-50');
+                        }
+                        draggedItem = null;
+                        if (placeholder && placeholder.parentNode) {
+                            placeholder.parentNode.removeChild(placeholder);
+                        }
+                    }, 0);
+                });
+            });
+
+            function handleDragOver(e, container) {
+                e.preventDefault();
+                if (!container || !draggedItem) return;
+                container.classList.add('over');
+                const afterElement = getDragAfterElement(container, e.clientY, draggableSelector + ':not(.opacity-50)');
+                if (afterElement == null) {
+                    container.appendChild(placeholder);
+                } else {
+                    container.insertBefore(placeholder, afterElement);
+                }
+            }
+
+            [dropZone, availableItemsContainer].forEach(container => {
+                if (!container) return;
+                container.addEventListener('dragover', (e) => handleDragOver(e, container));
+                container.addEventListener('dragleave', (e) => {
+                    if (container && !container.contains(e.relatedTarget) && placeholder && placeholder.parentNode === container) {
+                        // Minor: Debated removing placeholder here, but can cause flicker. Current behavior is fine.
+                    }
+                    if (container) container.classList.remove('over');
+                });
+                container.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    if (draggedItem && container) {
+                        if (placeholder && placeholder.parentNode === container) {
+                            container.insertBefore(draggedItem, placeholder);
+                        } else {
+                            container.appendChild(draggedItem);
+                        }
+                        if (placeholder && placeholder.parentNode) {
+                            placeholder.parentNode.removeChild(placeholder);
+                        }
+                    }
+                    if (container) container.classList.remove('over');
+                });
+            });
+        }
+        
+        function getDragAfterElement(container, y, itemSelector) { if (!container) return null; const draggableElements = [...container.querySelectorAll(itemSelector)]; return draggableElements.reduce((closest, child) => { const box = child.getBoundingClientRect(); const offset = y - box.top - box.height / 2; if (offset < 0 && offset > closest.offset) { return { offset: offset, element: child }; } else { return closest; } }, { offset: Number.NEGATIVE_INFINITY }).element; }
+
+
+        // ====================================================================================
+        // --- MODULE CHALLENGES DATA (ALL_CHALLENGES Object) ---
+        // ====================================================================================
+        const ALL_CHALLENGES = {
+            'algorithms': [ 
+                { moduleTitle: "The Scroll of Algorithms", challengeTitle: "The Sandwich Algorithm", description: "Drag and drop the steps in the correct order to make a delicious sandwich!", xp: 100, availableSteps: [ "Get two slices of bread.", "Get your filling (e.g., ham, cheese).", "Get spread (e.g., butter, mayonnaise).", "Spread butter/mayonnaise on one slice of bread.", "Place the filling on that slice.", "Place the second slice of bread on top." ], content: function() { this.correctOrder = this.availableSteps.slice(); let shuffledSteps = [...this.availableSteps].sort(() => Math.random() - 0.5); return ` <h3 class="text-xl font-semibold mb-2 text-gray-100">${this.challengeTitle}</h3> <p class="mb-4 text-gray-300">${this.description}</p> <div class="mb-4"> <h4 class="text-lg font-semibold mb-2 text-gray-100">Available Steps:</h4> <div id="algoAvailableSteps_sandwich" class="flex flex-wrap gap-2 p-2 rounded-md bg-gray-700/50 min-h-[60px]"> ${shuffledSteps.map(step => `<div class="draggable-item p-2 rounded-md shadow text-sm" data-step="${step}">${step}</div>`).join('')} </div> </div> <div> <h4 class="text-lg font-semibold mb-2 text-gray-100">Your Algorithm:</h4> <div id="algoDropZone_sandwich" class="drop-zone p-2 rounded-md space-y-2 min-h-[120px]"></div> </div> <button onclick="playSound('click'); checkAlgorithmOrder('algoDropZone_sandwich', 'algoAvailableSteps_sandwich', ALL_CHALLENGES.algorithms[0].correctOrder, ${this.xp})" class="btn btn-primary mt-6 w-full">Check My Algorithm!</button>`; }, init: function() { setupGenericDragAndDrop('.draggable-item', 'algoDropZone_sandwich', 'algoAvailableSteps_sandwich'); } },
+                { moduleTitle: "The Scroll of Algorithms", challengeTitle: "Getting Ready for School", description: "Order the steps for getting ready for school.", xp: 120, availableSteps: [ "Wake up.", "Turn off alarm.", "Get out of bed.", "Go to the bathroom.", "Brush your teeth.", "Wash your face.", "Get dressed.", "Eat breakfast.", "Grab your bag.", "Leave the house." ], hint: "Think about what you absolutely MUST do before you can eat breakfast.", content: function() { this.correctOrder = this.availableSteps.slice(); let shuffledSteps = [...this.availableSteps].sort(() => Math.random() - 0.5); return ` <h3 class="text-xl font-semibold mb-2 text-gray-100">${this.challengeTitle}</h3> <p class="mb-4 text-gray-300">${this.description}</p> <div class="mb-4"> <h4 class="text-lg font-semibold mb-2 text-gray-100">Available Steps:</h4> <div id="algoAvailableSteps_school" class="flex flex-wrap gap-2 p-2 rounded-md bg-gray-700/50 min-h-[60px]"> ${shuffledSteps.map(step => `<div class="draggable-item p-2 rounded-md shadow text-sm" data-step="${step}">${step}</div>`).join('')} </div> </div> <div> <h4 class="text-lg font-semibold mb-2 text-gray-100">Your Algorithm:</h4> <div id="algoDropZone_school" class="drop-zone p-2 rounded-md space-y-2 min-h-[120px]"></div> </div> <button onclick="playSound('click'); checkAlgorithmOrder('algoDropZone_school', 'algoAvailableSteps_school', ALL_CHALLENGES.algorithms[1].correctOrder, ${this.xp})" class="btn btn-primary mt-6 w-full">Check My Algorithm!</button>`; }, init: function() { setupGenericDragAndDrop('.draggable-item', 'algoDropZone_school', 'algoAvailableSteps_school'); } }
+            ],
+            'flowcharts': [ 
+                { moduleTitle: "The Map of Flowcharts", challengeTitle: "Flowchart Symbol Match", description: "Drag each flowchart symbol shape to its correct name/description.", xp: 80, symbolsData: [ { id: 'terminal', name: 'Terminal (Start/End)', shapeClass: 'fs-terminal', visual: 'Oval Shape' }, { id: 'process', name: 'Process (Calculation/Action)', shapeClass: 'fs-process', visual: 'Rectangle' }, { id: 'input_output', name: 'Input/Output (Data Entry/Display)', shapeClass: 'fs-input-output', visual: 'Parallelogram' }, { id: 'decision', name: 'Decision (Question Yes/No)', shapeClass: 'fs-decision', visual: 'Diamond' } ], content: function() { let symbols = [...this.symbolsData].sort(() => Math.random() - 0.5); let names = [...this.symbolsData].sort(() => Math.random() - 0.5); return ` <h3 class="text-xl font-semibold mb-2 text-gray-100">${this.challengeTitle}</h3> <p class="mb-4 text-gray-300">${this.description}</p> <div class="grid grid-cols-1 md:grid-cols-2 gap-6"> <div> <h4 class="text-lg font-semibold mb-2 text-gray-100">Symbols:</h4> <div id="fcSymbolDragContainer_match" class="space-y-3 p-2 rounded-md bg-gray-700/50 min-h-[100px] flex flex-col items-center"> ${symbols.map(s => `<div class="flowchart-symbol ${s.shapeClass} flowchart-symbol-draggable" data-symbol-id="${s.id}"><span>${s.visual}</span></div>`).join('')} </div> </div> <div> <h4 class="text-lg font-semibold mb-2 text-gray-100">Descriptions:</h4> <div id="fcNameDropContainer_match" class="space-y-3"> ${names.map(n => `<div class="drop-zone p-3 rounded-md min-h-[60px] flex items-center justify-center" data-target-id="${n.id}"><span class="text-gray-400 italic">${n.name}</span></div>`).join('')} </div> </div> </div> <button onclick="playSound('click'); checkFlowchartSymbolMatch(${this.xp})" class="btn btn-primary mt-6 w-full">Check Match!</button>`; }, init: function() { setupGenericDragAndDrop('.flowchart-symbol-draggable', null, 'fcSymbolDragContainer_match'); const dropZones = document.querySelectorAll('#fcNameDropContainer_match .drop-zone'); dropZones.forEach(zone => { zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('over'); }); zone.addEventListener('dragleave', e => zone.classList.remove('over')); zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('over'); if (draggedItem && zone.children.length <= 1) { const existingSymbol = zone.querySelector('.flowchart-symbol-draggable'); if(existingSymbol) { document.getElementById('fcSymbolDragContainer_match').appendChild(existingSymbol); } zone.appendChild(draggedItem); const textSpan = zone.querySelector('span.text-gray-400'); if(textSpan) textSpan.style.display = 'none'; } }); }); } },
+                { moduleTitle: "The Map of Flowcharts", challengeTitle: "Build Flowchart: Area of Rectangle", description: "Algorithm: 1. Start, 2. Get Length, 3. Get Width, 4. Calculate Area = Length * Width, 5. Display Area, 6. End. Drag symbols to build this flowchart.", xp: 150, availableSymbols: [ { id: 's_start', text: 'Start', type: 'terminal', shapeClass: 'fs-terminal' }, { id: 's_input_l', text: 'Input Length', type: 'input_output', shapeClass: 'fs-input-output' }, { id: 's_input_w', text: 'Input Width', type: 'input_output', shapeClass: 'fs-input-output' }, { id: 's_process_area', text: 'Area = L * W', type: 'process', shapeClass: 'fs-process' }, { id: 's_output_area', text: 'Display Area', type: 'input_output', shapeClass: 'fs-input-output' }, { id: 's_end', text: 'End', type: 'terminal', shapeClass: 'fs-terminal' }], correctOrderIds: ['s_start', 's_input_l', 's_input_w', 's_process_area', 's_output_area', 's_end'], content: function() { let shuffledSymbols = [...this.availableSymbols].sort(() => Math.random() - 0.5); return ` <h3 class="text-xl font-semibold mb-2 text-gray-100">${this.challengeTitle}</h3> <p class="mb-4 text-gray-300 text-sm">${this.description}</p> <div class="grid grid-cols-1 md:grid-cols-3 gap-4"> <div class="md:col-span-1"> <h4 class="text-lg font-semibold mb-2 text-gray-100">Available Symbols:</h4> <div id="fcBuildAvailableSymbols_rect" class="p-2 rounded-md bg-gray-700/50 space-y-2 flex flex-col items-center"> ${shuffledSymbols.map(s => `<div class="flowchart-symbol ${s.shapeClass} flowchart-symbol-draggable" data-symbol-id="${s.id}" data-symbol-type="${s.type}"><span>${s.text}</span></div>`).join('')} </div> </div> <div class="md:col-span-2"> <h4 class="text-lg font-semibold mb-2 text-gray-100">Your Flowchart:</h4> <div id="fcBuildDropZone_rect" class="flowchart-drop-zone drop-zone p-4 rounded-md min-h-[300px]"></div> </div> </div> <button onclick="playSound('click'); checkFlowchartBuildOrder('fcBuildDropZone_rect', 'fcBuildAvailableSymbols_rect', ALL_CHALLENGES.flowcharts[1].correctOrderIds, ${this.xp})" class="btn btn-primary mt-6 w-full">Check Flowchart</button>`; }, init: function() { setupGenericDragAndDrop('.flowchart-symbol-draggable', 'fcBuildDropZone_rect', 'fcBuildAvailableSymbols_rect'); } }, // Removed extra 'true' argument
+                { 
+                    moduleTitle: "The Map of Flowcharts", challengeTitle: "Build Flowchart: Old Enough to Vote?", 
+                    description: "Algorithm: 1. Start, 2. Get Age, 3. If Age >= 18? Yes: Display 'Can Vote', No: Display 'Cannot Vote', 4. End. Build this flowchart.", 
+                    xp: 180,
+                    availableSymbols: [ 
+                        { id: 'v_start', text: 'Start', type: 'terminal', shapeClass: 'fs-terminal' }, 
+                        { id: 'v_input_age', text: 'Input Age', type: 'input_output', shapeClass: 'fs-input-output' },
+                        { id: 'v_decision_age', text: 'Age >= 18?', type: 'decision', shapeClass: 'fs-decision' },
+                        { id: 'v_output_can_vote', text: 'Display "Can Vote"', type: 'input_output', shapeClass: 'fs-input-output' },
+                        { id: 'v_output_cannot_vote', text: 'Display "Cannot Vote"', type: 'input_output', shapeClass: 'fs-input-output' },
+                        { id: 'v_end', text: 'End', type: 'terminal', shapeClass: 'fs-terminal' }
+                    ],
+                    correctOrderIds: ['v_start', 'v_input_age', 'v_decision_age', 'v_output_can_vote', 'v_end'], 
+                    hint: "The Decision symbol is key here! Think about what happens after the question is asked. For this exercise, show the 'Yes' path.",
+                    content: function() {
+                        let shuffledSymbols = [...this.availableSymbols].sort(() => Math.random() - 0.5);
+                        return `
+                            <h3 class="text-xl font-semibold mb-2 text-gray-100">${this.challengeTitle}</h3>
+                            <p class="mb-4 text-gray-300 text-sm">${this.description}</p>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="md:col-span-1">
+                                    <h4 class="text-lg font-semibold mb-2 text-gray-100">Available Symbols:</h4>
+                                    <div id="fcBuildAvailableSymbols_vote" class="p-2 rounded-md bg-gray-700/50 space-y-2 flex flex-col items-center">
+                                        ${shuffledSymbols.map(s => `<div class="flowchart-symbol ${s.shapeClass} flowchart-symbol-draggable" data-symbol-id="${s.id}" data-symbol-type="${s.type}"><span>${s.text}</span></div>`).join('')}
+                                    </div>
+                                </div>
+                                <div class="md:col-span-2">
+                                    <h4 class="text-lg font-semibold mb-2 text-gray-100">Your Flowchart:</h4>
+                                    <p class="text-xs text-gray-400 mb-2 italic">(Note: For this challenge, place symbols in a top-to-bottom sequence representing the 'Yes' path after the decision.)</p>
+                                    <div id="fcBuildDropZone_vote" class="flowchart-drop-zone drop-zone p-4 rounded-md min-h-[300px]"></div>
+                                </div>
+                            </div>
+                            <button onclick="playSound('click'); checkVoteFlowchart(${this.xp})" class="btn btn-primary mt-6 w-full">Check Flowchart</button>
+                        `;
+                    },
+                    init: function() { setupGenericDragAndDrop('.flowchart-symbol-draggable', 'fcBuildDropZone_vote', 'fcBuildAvailableSymbols_vote'); } // Removed extra 'true' argument
+                }
+            ],
+            'basic_prog_1': [ 
+                { moduleTitle: "The Pillars of Code", challengeTitle: "Variable Values", description: "What value is stored in the variable `fruit` after this assignment: `fruit = \"Apple\"`?", xp: 50, questionType: 'mcq', choices: ["Apple", "Banana", "Orange", "fruit"], answer: "Apple", content: function() { return ` <h3 class="text-xl font-semibold mb-2 text-gray-100">${this.challengeTitle}</h3> <p class="mb-1 text-gray-300 text-lg">${this.description}</p> <p class="mb-4 text-sm text-gray-400">Select the correct value.</p> <div id="bp1_q1_choices" class="space-y-2"> ${this.choices.map(choice => `<button class="choice-item block w-full text-left p-3 rounded-md btn" data-value="${choice}">${choice}</button>`).join('')} </div> <button onclick="playSound('click'); checkMCQAnswer(ALL_CHALLENGES.basic_prog_1[0].answer, 'bp1_q1_choices', ${this.xp})" class="btn btn-primary mt-6 w-full">Submit Answer</button>`; }, init: function() { document.querySelectorAll('#bp1_q1_choices .choice-item').forEach(btn => { btn.onclick = () => { playSound('click'); document.querySelectorAll('#bp1_q1_choices .choice-item').forEach(b => { b.classList.remove('bg-pink-500', 'text-white'); b.dataset.selected = "false"; }); btn.classList.add('bg-pink-500', 'text-white'); btn.dataset.selected = "true"; } }); } },
+                { moduleTitle: "The Pillars of Code", challengeTitle: "Arithmetic Operators", description: "What is the result of the expression: `sum = 10 + (5 * 2)`?", xp: 60, questionType: 'fill', answer: "20", hint: "Remember the order of operations (PEMDAS/BODMAS)! Multiplication comes before addition.", content: function() { return ` <h3 class="text-xl font-semibold mb-2 text-gray-100">${this.challengeTitle}</h3> <p class="mb-1 text-gray-300 text-lg">${this.description}</p> <p class="mb-4 text-sm text-gray-400">Enter the numerical result stored in 'sum'.</p> <input type="text" id="bp1_q2_answer" class="input-field w-full p-2 rounded-md" placeholder="Your answer..."> <button onclick="playSound('click'); checkFillAnswer(ALL_CHALLENGES.basic_prog_1[1].answer, 'bp1_q2_answer', ${this.xp})" class="btn btn-primary mt-6 w-full">Submit Answer</button>`; } }
+            ],
+            'basic_prog_2': [ 
+                { moduleTitle: "The Alchemist's Equations", challengeTitle: "Perimeter of a Square", description: "Equation: `Perimeter = 4 * side`. Translate this into conceptual code by filling the blanks.", xp: 70, blanks: [ { id: "var_side", placeholder: "input variable for side" }, { id: "var_perimeter", placeholder: "result variable" }, { id: "calc_side", placeholder: "side variable" }, { id: "display_perimeter", placeholder: "perimeter variable" } ], correctAnswers: { var_side: "side", var_perimeter: "Perimeter", calc_side: "side", display_perimeter: "Perimeter" }, hint: "The 'Input' line usually declares the variable that receives user data. The calculation line uses this variable.", content: function() { return ` <h3 class="text-xl font-semibold mb-2 text-gray-100">${this.challengeTitle}</h3> <p class="mb-1 text-gray-300 text-lg">${this.description}</p> <div class="p-4 rounded-md bg-gray-800/50 font-mono text-sm space-y-1"> <div>Input <input type="text" id="var_side" class="input-field w-1/3" placeholder="${this.blanks[0].placeholder}"></div> <div><input type="text" id="var_perimeter" class="input-field w-1/3" placeholder="${this.blanks[1].placeholder}"> = 4 * <input type="text" id="calc_side" class="input-field w-1/3" placeholder="${this.blanks[2].placeholder}"></div> <div>Display <input type="text" id="display_perimeter" class="input-field w-1/3" placeholder="${this.blanks[3].placeholder}"></div> </div> <button onclick="playSound('click'); checkEquationBlanks(ALL_CHALLENGES.basic_prog_2[0].correctAnswers, ALL_CHALLENGES.basic_prog_2[0].blanks, ${this.xp})" class="btn btn-primary mt-6 w-full">Check Code</button>`; } }
+            ]
+        };
+
+        // --- Challenge Check Functions ---
+        function checkAlgorithmOrder(dropZoneId, availableZoneId, correctOrder, xpToAward) { const dropZone = document.getElementById(dropZoneId); const userStepsElements = dropZone.querySelectorAll('.draggable-item'); const userSteps = Array.from(userStepsElements).map(el => el.dataset.step); let allCorrect = true; if (userSteps.length !== correctOrder.length) allCorrect = false; userStepsElements.forEach((el, index) => { el.classList.remove('correct-step', 'incorrect-step'); if (index < correctOrder.length && el.dataset.step === correctOrder[index]) el.classList.add('correct-step'); else { el.classList.add('incorrect-step'); allCorrect = false; } }); const availableStepsContainer = document.getElementById(availableZoneId); if (availableStepsContainer && availableStepsContainer.children.length > 0 && userSteps.length !== correctOrder.length) allCorrect = false; if (allCorrect && userSteps.length === correctOrder.length) showFeedback(`Perfect! You earned ${xpToAward} XP!`, true, xpToAward); else if (userSteps.length === 0) showFeedback('Your algorithm is empty. Drag some steps over!', null); else showFeedback('Not quite right. Review the steps and their order.', false); }
+        function checkFlowchartSymbolMatch(xpToAward) { const dropZones = document.querySelectorAll('#fcNameDropContainer_match .drop-zone'); let correctMatches = 0; let totalDropped = 0; const expectedTotal = ALL_CHALLENGES.flowcharts[0].symbolsData.length; dropZones.forEach(zone => { const droppedSymbol = zone.querySelector('.flowchart-symbol-draggable'); zone.classList.remove('correct-step', 'incorrect-step'); const textSpan = zone.querySelector('span.text-gray-400'); if (droppedSymbol) { totalDropped++; if (droppedSymbol.dataset.symbolId === zone.dataset.targetId) { zone.classList.add('correct-step'); correctMatches++; } else { zone.classList.add('incorrect-step'); } if(textSpan) textSpan.style.display = 'none'; } else { if(textSpan) textSpan.style.display = 'inline'; } }); if (totalDropped === 0) showFeedback("Drag symbols to their descriptions!", null); else if (correctMatches === expectedTotal && totalDropped === expectedTotal) showFeedback(`All symbols matched correctly! You earned ${xpToAward} XP!`, true, xpToAward); else if (correctMatches > 0) showFeedback(`You got ${correctMatches} out of ${expectedTotal} correct. Keep trying!`, false); else showFeedback('None of the symbols are matched correctly. Try again!', false); }
+        
+        function checkFlowchartBuildOrder(dropZoneId, availableZoneId, correctOrderIds, xpToAward) { 
+            const dropZone = document.getElementById(dropZoneId);
+            const userSymbolsElements = dropZone.querySelectorAll('.flowchart-symbol-draggable');
+            const userSymbolIds = Array.from(userSymbolsElements).map(el => el.dataset.symbolId);
+            let allCorrect = true;
+            
+            if (userSymbolIds.length !== correctOrderIds.length) {
+                allCorrect = false;
+            }
+        
+            userSymbolsElements.forEach((el, index) => {
+                el.classList.remove('correct-step', 'incorrect-step');
+                // No separate symbolContainer div, apply styles directly to 'el'
+                if (index < correctOrderIds.length && el.dataset.symbolId === correctOrderIds[index]) {
+                    el.classList.add('correct-step');
+                } else {
+                    el.classList.add('incorrect-step');
+                    allCorrect = false;
+                }
+            });
+            
+            const availableSymbolsContainer = document.getElementById(availableZoneId);
+            if (availableSymbolsContainer && availableSymbolsContainer.children.length > 0 && userSymbolIds.length !== correctOrderIds.length) {
+                 allCorrect = false; 
+            }
+        
+            if (allCorrect && userSymbolIds.length === correctOrderIds.length) {
+                showFeedback(`Flowchart built perfectly! You earned ${xpToAward} XP!`, true, xpToAward);
+            } else if (userSymbolIds.length === 0) {
+                showFeedback('Your flowchart is empty. Drag some symbols over!', null);
+            } else {
+                showFeedback('The flowchart structure is not quite right. Check the symbol order and ensure all required symbols are used.', false);
+            }
+        }
+
+        function checkVoteFlowchart(xpToAward) {
+            const dropZone = document.getElementById('fcBuildDropZone_vote');
+            const userSymbolsElements = dropZone.querySelectorAll('.flowchart-symbol-draggable');
+            const userSymbolIds = Array.from(userSymbolsElements).map(el => el.dataset.symbolId);
+            
+            const hasStart = userSymbolIds.includes('v_start');
+            const hasInputAge = userSymbolIds.includes('v_input_age');
+            const hasDecision = userSymbolIds.includes('v_decision_age');
+            const hasEnd = userSymbolIds.includes('v_end');
+            const hasCanVote = userSymbolIds.includes('v_output_can_vote');
+            const hasCannotVote = userSymbolIds.includes('v_output_cannot_vote'); // Not strictly required for the "Yes" path focus
+
+            let correct = hasStart && hasInputAge && hasDecision && hasEnd && hasCanVote; // Check for the "Yes" path elements
+
+            // Check sequence for the "Yes" path: Start -> Input Age -> Decision Age -> Output Can Vote -> End
+            let sequenceCorrect = false;
+            if (correct) { // Only check sequence if all main elements for "Yes" path are present
+                const idxStart = userSymbolIds.indexOf('v_start');
+                const idxInputAge = userSymbolIds.indexOf('v_input_age');
+                const idxDecisionAge = userSymbolIds.indexOf('v_decision_age');
+                const idxCanVote = userSymbolIds.indexOf('v_output_can_vote');
+                const idxEnd = userSymbolIds.indexOf('v_end');
+
+                if (idxStart < idxInputAge && idxInputAge < idxDecisionAge && idxDecisionAge < idxCanVote && idxCanVote < idxEnd) {
+                    sequenceCorrect = true;
+                }
+            }
+            
+            // Also ensure 'cannot_vote' is not in the main sequence if we are checking the 'yes' path primarily
+            // For simplicity, if 'cannot_vote' is present and 'can_vote' is also present, we'll assume it's an attempt to show both,
+            // but the primary check is for the 'yes' path sequence.
+            if (userSymbolIds.includes('v_output_cannot_vote') && sequenceCorrect) {
+                // If 'cannot_vote' is present, it shouldn't break the 'yes' path sequence.
+                // This logic can be more complex for true branching validation.
+            }
+
+
+            userSymbolsElements.forEach(el => {
+                el.classList.remove('correct-step', 'incorrect-step');
+                // Highlight based on presence and rough order for the "Yes" path
+                const id = el.dataset.symbolId;
+                if ((id === 'v_start' && hasStart) ||
+                    (id === 'v_input_age' && hasInputAge) ||
+                    (id === 'v_decision_age' && hasDecision) ||
+                    (id === 'v_output_can_vote' && hasCanVote) ||
+                    (id === 'v_end' && hasEnd)) {
+                    if (sequenceCorrect) {
+                         el.classList.add('correct-step');
+                    } else if (correct) { // All elements present but sequence might be off
+                         el.classList.add('correct-step'); // Mark present items as correct for now
+                    } else {
+                         el.classList.add('incorrect-step'); // If essential items are missing
+                    }
+                } else if (id === 'v_output_cannot_vote' && hasCannotVote) {
+                    // It's okay if this is present but not part of the main "yes" path sequence check
+                    el.classList.add('correct-step'); 
+                }
+                else {
+                    el.classList.add('incorrect-step');
+                }
+            });
+
+            if (correct && sequenceCorrect) {
+                showFeedback(`Great job on the voting flowchart (Yes path)! You earned ${xpToAward} XP!`, true, xpToAward);
+            } else if (userSymbolIds.length === 0) {
+                showFeedback('Your flowchart is empty. Drag some symbols over!', null);
+            } else {
+                showFeedback('The voting flowchart structure needs adjustment. Ensure Start, Input Age, Decision, "Can Vote" Output, and End are present and in the correct order for the "Yes" path.', false);
+            }
+        }
+        function checkMCQAnswer(correctAnswer, choicesContainerId, xpToAward) { const container = document.getElementById(choicesContainerId); const selectedButton = container.querySelector('.choice-item[data-selected="true"]'); if (!selectedButton) { showFeedback("Please select an answer!", null); return; } const userAnswer = selectedButton.dataset.value; container.querySelectorAll('.choice-item').forEach(btn => btn.classList.remove('correct-answer', 'incorrect-answer')); if (userAnswer === correctAnswer) { selectedButton.classList.add('correct-answer'); showFeedback(`Correct! You earned ${xpToAward} XP!`, true, xpToAward); } else { selectedButton.classList.add('incorrect-answer'); const correctBtn = container.querySelector(`.choice-item[data-value="${correctAnswer}"]`); if(correctBtn) correctBtn.classList.add('correct-answer'); showFeedback(`Not quite. The correct answer was ${correctAnswer}.`, false); } selectedButton.dataset.selected = "false"; }
+        function checkFillAnswer(correctAnswer, inputId, xpToAward) { const inputElement = document.getElementById(inputId); const userAnswer = inputElement.value.trim(); inputElement.classList.remove('correct-answer', 'incorrect-answer'); if (userAnswer.toLowerCase() === correctAnswer.toLowerCase()) { inputElement.classList.add('correct-answer'); showFeedback(`Correct! You earned ${xpToAward} XP!`, true, xpToAward); } else { inputElement.classList.add('incorrect-answer'); showFeedback(`Not quite. The correct answer is ${correctAnswer}. Try again!`, false); } }
+        function checkEquationBlanks(correctAnswers, blanksMeta, xpToAward) { let allCorrect = true; let filledCount = 0; blanksMeta.forEach(blank => { const inputElement = document.getElementById(blank.id); const userAnswer = inputElement.value.trim(); inputElement.classList.remove('correct-answer', 'incorrect-answer'); if (userAnswer) filledCount++; if (userAnswer.toLowerCase() === correctAnswers[blank.id].toLowerCase()) inputElement.classList.add('correct-answer'); else { inputElement.classList.add('incorrect-answer'); allCorrect = false; } }); if (filledCount === 0) { showFeedback("Please fill in the blanks to complete the code.", null); return; } if (allCorrect) showFeedback(`Excellent translation! You earned ${xpToAward} XP!`, true, xpToAward); else showFeedback('Some parts are not quite right. Check the highlighted fields.', false); }
+
+
+        // --- Initial Page Setup ---
+        const faders = document.querySelectorAll('.fade-in-up');
+        const appearOptions = { threshold: 0.2, rootMargin: "0px 0px -50px 0px" };
+        const appearOnScroll = new IntersectionObserver(function(entries, observer) { entries.forEach(entry => { if (!entry.isIntersecting) return; entry.target.style.animationPlayState = 'running'; observer.unobserve(entry.target); }); }, appearOptions);
+        faders.forEach(fader => { fader.style.animationPlayState = 'paused'; appearOnScroll.observe(fader); });
+    </script>
+</body>
+</html>
